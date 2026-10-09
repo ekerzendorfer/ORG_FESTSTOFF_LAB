@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ORG_FESTSTOFF_LAB · Organische Feststoffanalyse</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <p class="eyebrow">CHEMIE mit KI · Virtuelles Analytiklabor</p>
+        <h1>Organische Feststoffanalyse</h1>
+        <p class="subtitle">Klassische Vorproben liefern Strukturhinweise – aber noch keinen Stoffnamen.</p>
+      </div>
+      <div class="version">v0.1.0<br><small id="modeLabel">Single-Mode</small></div>
+    </div>
+  </header>
+
+  <div id="bridgeContext" class="bridge-context">
+    <div>
+      <strong>Auftrag aus dem Analytik-Hub</strong>
+      <div id="bridgeSampleLabel" class="bridge-meta"></div>
+      <div id="bridgeRunLabel" class="bridge-run"></div>
+      <div id="bridgeMessage" class="bridge-meta"></div>
+    </div>
+    <button id="bridgeReturnBtn" class="secondary compact" type="button">Ohne Ergebnis zurück</button>
+  </div>
+
+  <main class="wrap layout">
+    <section class="card sample-card">
+      <p class="kicker">Probe</p>
+      <div class="sample-title-row">
+        <div>
+          <h2 id="sampleTitle">Unbekannter weißer organischer Feststoff</h2>
+          <p id="sampleIntro" class="muted"></p>
+        </div>
+        <span class="sample-chip">Identität verborgen</span>
+      </div>
+      <div class="principle">
+        <strong>Ziel dieser Station</strong>
+        <p>Untersuche ausgewählte Eigenschaften und Reaktionen. Formuliere daraus nur allgemeine Strukturmerkmale. Eine konkrete Stoffidentität ist hier ausdrücklich noch nicht das Ziel.</p>
+      </div>
+    </section>
+
+    <section class="card methods-card">
+      <div class="section-head">
+        <div>
+          <p class="kicker">Methoden</p>
+          <h2>Klassische Vorproben</h2>
+        </div>
+        <span id="progressBadge" class="progress-badge">0 durchgeführt</span>
+      </div>
+      <div id="methodGrid" class="method-grid"></div>
+      <div class="reserved-note">
+        <strong>Bewusst noch nicht eingesetzt:</strong> Der Schmelzpunkt bleibt für eine spätere unabhängige Bestätigung einer Strukturhypothese reserviert.
+      </div>
+    </section>
+
+    <section class="card journal-card">
+      <div class="section-head">
+        <div>
+          <p class="kicker">Befundjournal</p>
+          <h2>Beobachtungen</h2>
+        </div>
+        <button id="resetBtn" class="ghost compact" type="button">Neu beginnen</button>
+      </div>
+      <div id="journal" class="journal"></div>
+    </section>
+
+    <section class="card summary-card">
+      <div class="section-head">
+        <div>
+          <p class="kicker">Auswertung</p>
+          <h2>Allgemeine Strukturmerkmale</h2>
+        </div>
+        <button id="summarizeBtn" class="primary compact" type="button" disabled>Befunde zusammenfassen</button>
+      </div>
+      <p id="summaryHint" class="muted">Für eine belastbare Zusammenfassung fehlen noch Kernbefunde.</p>
+      <div id="featureGrid" class="feature-grid"></div>
+      <div id="identityGuard" class="identity-guard" hidden>
+        <strong>Wichtig:</strong> Diese Voranalyse grenzt die Struktur ein, identifiziert aber noch keinen konkreten Stoff.
+      </div>
+      <div class="submit-row">
+        <button id="bridgeSubmitBtn" class="primary" type="button" hidden disabled>Strukturmerkmale an Hub übergeben</button>
+      </div>
+    </section>
+
+    <section class="card safety-card">
+      <p class="kicker">Hinweis</p>
+      <p>Die dargestellten Reaktionen sind didaktisch kuratierte virtuelle Modellversuche. Reale Durchführung nur im schulischen Labor nach Gefährdungsbeurteilung und unter fachkundiger Aufsicht.</p>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

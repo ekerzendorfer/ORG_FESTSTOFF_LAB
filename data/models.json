@@ -1,0 +1,129 @@
+{
+  "schema_version": "0.1.0",
+  "models": [
+    {
+      "id": "vcoe01_residue_solid_v1",
+      "display_label": "Unbekannter weißer organischer Feststoff",
+      "intro_de": "Der nichtflüchtige Rückstand wurde nach dem Abkühlen als weißer kristalliner Feststoff isoliert. Seine Identität ist unbekannt.",
+      "default_allowed_methods": [
+        "SOLUBILITY",
+        "PH_AQUEOUS",
+        "BICARBONATE",
+        "FE3",
+        "FLAME"
+      ],
+      "default_required_evidence": [
+        "SOLUBILITY",
+        "BICARBONATE",
+        "FE3",
+        "FLAME"
+      ],
+      "methods": {
+        "SOLUBILITY": {
+          "title_de": "Lösungsverhalten",
+          "description_de": "Vergleiche kleine Teilproben in Wasser, einem polaren organischen und einem unpolaren Lösungsmittel.",
+          "observation_de": "In Wasser nur begrenzt löslich; in Ethanol gut löslich; in Heptan kaum löslich.",
+          "detail_de": "Die Kombination spricht für deutlich polare Funktionalitäten bei gleichzeitig größerem organischem Kohlenstoffgerüst.",
+          "measurement": {
+            "water": "begrenzt löslich",
+            "polar_organic": {
+              "solvent": "Ethanol",
+              "result": "gut löslich"
+            },
+            "unpolar_organic": {
+              "solvent": "Heptan",
+              "result": "kaum löslich"
+            }
+          }
+        },
+        "PH_AQUEOUS": {
+          "title_de": "pH der wässrigen Phase",
+          "description_de": "Bestimme den pH der herstellbaren wässrigen Phase.",
+          "requires": [
+            "SOLUBILITY"
+          ],
+          "observation_de": "Die wässrige Phase reagiert deutlich sauer (pH etwa 2,4–2,8).",
+          "detail_de": "Der Befund zeigt eine saure organische Funktion, legt deren genaue Art aber noch nicht fest.",
+          "measurement": {
+            "ph_range": [
+              2.4,
+              2.8
+            ],
+            "character": "sauer"
+          }
+        },
+        "BICARBONATE": {
+          "title_de": "Hydrogencarbonatprobe",
+          "description_de": "Prüfe eine kleine Teilprobe mit Hydrogencarbonat.",
+          "observation_de": "Deutliche Gasentwicklung; das Gas entspricht im Modell Kohlenstoffdioxid.",
+          "detail_de": "Eine organische Säure, die Hydrogencarbonat unter CO₂-Entwicklung umsetzt, stützt besonders eine Carbonsäurefunktion.",
+          "measurement": {
+            "gas_evolution": true,
+            "gas": "CO2"
+          }
+        },
+        "FE3": {
+          "title_de": "Fe(III)-Probe",
+          "description_de": "Prüfe eine geeignete Teilprobe mit Fe(III)-Ionen.",
+          "observation_de": "Es entsteht eine intensive violette Färbung.",
+          "detail_de": "Die charakteristische Komplexfärbung stützt eine phenolische bzw. entsprechend chelatisierende Hydroxyfunktion.",
+          "measurement": {
+            "color_change": "intensiv violett",
+            "positive": true
+          }
+        },
+        "FLAME": {
+          "title_de": "Brennprobe",
+          "description_de": "Beobachte das Flammenbild einer kleinen virtuellen Teilprobe.",
+          "observation_de": "Die Probe brennt mit deutlich rußender Flamme.",
+          "detail_de": "Das ist ein Hinweis auf einen hohen Kohlenstoffanteil bzw. ein ungesättigtes/aromatisches System – kein eindeutiger Aromatennachweis.",
+          "measurement": {
+            "sooty_flame": true
+          }
+        }
+      },
+      "feature_rules": {
+        "carboxylic_acid": {
+          "label_de": "Carbonsäurefunktion",
+          "strength": "strong",
+          "evidence": [
+            "BICARBONATE"
+          ],
+          "note_de": "durch CO₂-Entwicklung mit Hydrogencarbonat stark gestützt"
+        },
+        "phenolic_oh": {
+          "label_de": "Phenolische OH-Gruppe",
+          "strength": "strong",
+          "evidence": [
+            "FE3"
+          ],
+          "note_de": "durch charakteristische Fe(III)-Komplexfärbung stark gestützt"
+        },
+        "aromatic_or_unsaturated": {
+          "label_de": "Ungesättigtes/aromatisches System",
+          "strength": "indication",
+          "evidence": [
+            "FLAME"
+          ],
+          "note_de": "durch rußende Flamme als Hinweis gestützt, aber nicht eindeutig bewiesen"
+        },
+        "acidic_aqueous_phase": {
+          "label_de": "Saure wässrige Phase",
+          "strength": "supported",
+          "evidence": [
+            "PH_AQUEOUS"
+          ],
+          "note_de": "durch sauren pH-Bereich beobachtet"
+        },
+        "polar_character": {
+          "label_de": "Ausgeprägter polarer Charakter",
+          "strength": "indication",
+          "evidence": [
+            "SOLUBILITY"
+          ],
+          "note_de": "aus dem Lösungsverhalten abgeleitet"
+        }
+      }
+    }
+  ]
+}
