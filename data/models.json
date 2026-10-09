@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "models": [
     {
       "id": "vcoe01_residue_solid_v1",
@@ -124,6 +124,26 @@
           "note_de": "aus dem Lösungsverhalten abgeleitet"
         }
       }
+    }
+  ],
+  "confirmation_profiles": [
+    {
+      "substance_id": "SALICYLIC_ACID",
+      "name_de": "Salicylsäure",
+      "reference_range_c": [
+        158.6,
+        159.5
+      ],
+      "unknown_range_c": [
+        158.3,
+        159.6
+      ],
+      "mixed_range_c": [
+        158.4,
+        159.5
+      ],
+      "comparison_tolerance_c": 1.5,
+      "note_de": "Didaktisch kuratierter Schmelzbereich. Bei identischer Referenz bleibt der Mischschmelzpunkt eng und zeigt keine relevante Depression."
     }
   ]
 }
