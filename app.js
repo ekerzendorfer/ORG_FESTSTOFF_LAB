@@ -1,8 +1,8 @@
 (() => {
   "use strict";
 
-  const VERSION = "0.1.0";
-  const STORAGE_KEY = "ORG_FESTSTOFF_LAB_STATE_v0_1";
+  const VERSION = "0.2.0";
+  const STORAGE_KEY = "ORG_FESTSTOFF_LAB_STATE_v0_2";
   const els = {};
   let db = null;
   let model = null;
@@ -10,11 +10,16 @@
   let bridgeMode = bridgeRequested();
   let bridgeRun = null;
   let bridgeInput = null;
+  let confirmationProfile = null;
 
   document.addEventListener("DOMContentLoaded", init);
 
   function bridgeRequested(){
     return new URLSearchParams(window.location.search).get("bridge")==="1";
+  }
+
+  function isConfirmationMode(){
+    return !!(bridgeInput && bridgeInput.mode==="melting_confirmation");
   }
 
   function storageKey(){
@@ -37,15 +42,21 @@
   function bindEls(){
     [
       "modeLabel","bridgeContext","bridgeSampleLabel","bridgeRunLabel","bridgeMessage","bridgeReturnBtn",
-      "sampleTitle","sampleIntro","progressBadge","methodGrid","journal","resetBtn","summarizeBtn",
-      "summaryHint","featureGrid","identityGuard","bridgeSubmitBtn"
+      "sampleTitle","sampleIntro","sampleChip","screeningMethodsCard","screeningJournalCard","screeningSummaryCard",
+      "progressBadge","methodGrid","journal","resetBtn","summarizeBtn","summaryHint","featureGrid","identityGuard","bridgeSubmitBtn",
+      "confirmationCard","confirmationStatus","referenceTitle","measureUnknownBtn","measureReferenceBtn","measureMixedBtn",
+      "unknownRange","referenceRange","mixedRange","rangeBars","confirmationFeedback","confirmationSubmitBtn"
     ].forEach(id=>els[id]=document.getElementById(id));
   }
 
   function bindEvents(){
     els.resetBtn.addEventListener("click",resetState);
     els.summarizeBtn.addEventListener("click",summarizeFindings);
-    els.bridgeSubmitBtn.addEventListener("click",sendBridgeResult);
+    els.bridgeSubmitBtn.addEventListener("click",sendScreeningResult);
+    els.measureUnknownBtn.addEventListener("click",()=>measureMelting("unknown"));
+    els.measureReferenceBtn.addEventListener("click",()=>measureMelting("reference"));
+    els.measureMixedBtn.addEventListener("click",()=>measureMelting("mixed"));
+    els.confirmationSubmitBtn.addEventListener("click",sendMeltingResult);
     els.bridgeReturnBtn.addEventListener("click",()=>{
       if(window.AnalytikBridge && bridgeRun) window.AnalytikBridge.returnToHub(bridgeRun);
     });
@@ -70,31 +81,39 @@
       const run=window.AnalytikBridge.getRun(runId);
       if(!run) throw new Error("Analyse-Run wurde nicht gefunden.");
       if(run.app_id!=="ORG_FESTSTOFF_LAB") throw new Error("Der Run ist nicht für ORG_FESTSTOFF_LAB bestimmt.");
-      if(!run.input || run.input.mode!=="qualitative_screening") throw new Error("Unbekannter Analyseauftrag.");
+      if(!run.input || !["qualitative_screening","melting_confirmation"].includes(run.input.mode)) throw new Error("Unbekannter Analyseauftrag.");
 
       bridgeRun=run;
       bridgeInput=run.input;
-      model=findModel(bridgeInput.model_ref);
+      model=findModel(bridgeInput.model_ref)||db.models[0];
       if(!model) throw new Error("Das angeforderte Feststoffmodell ist nicht vorhanden.");
 
+      if(isConfirmationMode()){
+        confirmationProfile=findConfirmationProfile(bridgeInput.hypothesis_substance_id);
+        if(!confirmationProfile) throw new Error("Für die Strukturhypothese ist noch kein Schmelzpunkt-Profil kuratiert.");
+      }
+
       state=loadState()||freshState();
-      els.modeLabel.textContent="Analytik-Hub";
+      els.modeLabel.textContent=isConfirmationMode()?"Analytik-Hub · Bestätigung":"Analytik-Hub";
       els.bridgeContext.classList.add("active");
       els.bridgeSampleLabel.textContent=bridgeInput.display_label||model.display_label;
       els.bridgeRunLabel.textContent=run.run_id;
-      els.bridgeMessage.textContent="Nur allgemeine Strukturmerkmale zurückgeben – keine Stoffidentität.";
-      els.bridgeSubmitBtn.hidden=false;
+      els.bridgeMessage.textContent=isConfirmationMode()
+        ? "Gezielte physikalische Bestätigung der bereits spektroskopisch gestützten Strukturhypothese."
+        : "Nur allgemeine Strukturmerkmale zurückgeben – keine Stoffidentität.";
+      if(!isConfirmationMode()) els.bridgeSubmitBtn.hidden=false;
     }catch(err){
       els.bridgeContext.classList.add("active","error");
       els.bridgeMessage.textContent="Hub-Verbindung fehlgeschlagen: "+err.message;
       els.bridgeSubmitBtn.hidden=false;
       els.bridgeSubmitBtn.disabled=true;
+      els.confirmationSubmitBtn.disabled=true;
     }
   }
 
   function initSingleMode(){
     model=db.models[0];
-    state=loadState()||freshState();
+    state=loadState()||freshScreeningState();
     els.modeLabel.textContent="Single-Mode";
   }
 
@@ -102,14 +121,27 @@
     return db.models.find(x=>x.id===id)||null;
   }
 
+  function findConfirmationProfile(substanceId){
+    return (db.confirmation_profiles||[]).find(x=>x.substance_id===substanceId)||null;
+  }
+
+  function freshScreeningState(){
+    return {mode:"qualitative_screening",completedMethods:[],observations:{},summarized:false,supportedFeatures:{}};
+  }
+
+  function freshConfirmationState(){
+    return {mode:"melting_confirmation",measured:{unknown:false,reference:false,mixed:false}};
+  }
+
   function freshState(){
-    return {completedMethods:[],observations:{},summarized:false,supportedFeatures:{}};
+    return isConfirmationMode()?freshConfirmationState():freshScreeningState();
   }
 
   function loadState(){
     try{
       const parsed=JSON.parse(localStorage.getItem(storageKey()));
-      return parsed&&typeof parsed==="object"?Object.assign(freshState(),parsed):null;
+      if(!parsed||typeof parsed!=="object") return null;
+      return Object.assign(freshState(),parsed);
     }catch(_){return null;}
   }
 
@@ -164,8 +196,20 @@
   }
 
   function render(){
+    if(isConfirmationMode()) renderConfirmation();
+    else renderScreening();
+  }
+
+  function renderScreening(){
+    els.screeningMethodsCard.hidden=false;
+    els.screeningJournalCard.hidden=false;
+    els.screeningSummaryCard.hidden=false;
+    els.confirmationCard.hidden=true;
     els.sampleTitle.textContent=(bridgeInput&&bridgeInput.display_label)||model.display_label;
     els.sampleIntro.textContent=model.intro_de;
+    els.sampleChip.textContent="Identität verborgen";
+    document.querySelector(".principle strong").textContent="Ziel dieser Station";
+    document.querySelector(".principle p").textContent="Untersuche ausgewählte Eigenschaften und Reaktionen. Formuliere daraus nur allgemeine Strukturmerkmale. Eine konkrete Stoffidentität ist hier ausdrücklich noch nicht das Ziel.";
     renderMethods();
     renderJournal();
     renderSummary();
@@ -228,7 +272,67 @@
     return ({strong:"stark gestützt",supported:"gestützt",indication:"Hinweis",observed:"beobachtet"})[value]||value;
   }
 
-  function sendBridgeResult(){
+  function measureMelting(kind){
+    if(!confirmationProfile) return;
+    if(kind==="reference" && !state.measured.unknown) return;
+    if(kind==="mixed" && !state.measured.reference) return;
+    state.measured[kind]=true;
+    saveState();
+    renderConfirmation();
+  }
+
+  function formatRange(range){
+    return range[0].toLocaleString("de-AT",{minimumFractionDigits:1,maximumFractionDigits:1})+"–"+
+      range[1].toLocaleString("de-AT",{minimumFractionDigits:1,maximumFractionDigits:1})+" °C";
+  }
+
+  function renderRangeBars(){
+    const items=[
+      ["unknown","Probe",confirmationProfile.unknown_range_c],
+      ["reference","Referenz",confirmationProfile.reference_range_c],
+      ["mixed","Mischung",confirmationProfile.mixed_range_c]
+    ];
+    const min=150,max=165,span=max-min;
+    els.rangeBars.innerHTML=items.filter(([id])=>state.measured[id]).map(([id,label,range])=>{
+      const left=Math.max(0,Math.min(100,(range[0]-min)/span*100));
+      const width=Math.max(1,Math.min(100-left,(range[1]-range[0])/span*100));
+      return '<div class="range-row"><span>'+escapeHtml(label)+'</span><div class="range-track"><i class="'+id+'" style="left:'+left+'%;width:'+width+'%"></i></div><strong>'+escapeHtml(formatRange(range))+'</strong></div>';
+    }).join("");
+  }
+
+  function renderConfirmation(){
+    els.screeningMethodsCard.hidden=true;
+    els.screeningJournalCard.hidden=true;
+    els.screeningSummaryCard.hidden=true;
+    els.confirmationCard.hidden=false;
+    els.bridgeSubmitBtn.hidden=true;
+
+    const name=bridgeInput.hypothesis_name_de||confirmationProfile.name_de;
+    els.sampleTitle.textContent=(bridgeInput.display_label||model.display_label)+" · Bestätigung";
+    els.sampleIntro.textContent="Die instrumentelle Strukturaufklärung hat eine konkrete Hypothese geliefert. Jetzt folgt eine unabhängige physikalische Prüfung.";
+    els.sampleChip.textContent="Hypothese: "+name;
+    document.querySelector(".principle strong").textContent="Ziel dieser Station";
+    document.querySelector(".principle p").textContent="Ein passender Schmelzbereich allein ist nur ein Hinweis. Erst der gezielte Referenzvergleich und ein nicht erniedrigter, enger Mischschmelzpunkt bilden gemeinsam die Bestätigung.";
+    els.referenceTitle.textContent="Referenzstandard: "+name;
+
+    const n=Object.values(state.measured).filter(Boolean).length;
+    els.confirmationStatus.textContent=n+" von 3";
+    els.measureUnknownBtn.disabled=state.measured.unknown;
+    els.measureReferenceBtn.disabled=!state.measured.unknown||state.measured.reference;
+    els.measureMixedBtn.disabled=!state.measured.reference||state.measured.mixed;
+    els.unknownRange.textContent=state.measured.unknown?formatRange(confirmationProfile.unknown_range_c):"noch nicht gemessen";
+    els.referenceRange.textContent=state.measured.reference?formatRange(confirmationProfile.reference_range_c):"noch nicht gemessen";
+    els.mixedRange.textContent=state.measured.mixed?formatRange(confirmationProfile.mixed_range_c):"noch nicht gemessen";
+    renderRangeBars();
+
+    els.confirmationFeedback.hidden=!state.measured.mixed;
+    if(state.measured.mixed){
+      els.confirmationFeedback.innerHTML="<strong>Bestätigungsbefund:</strong> Probe und Referenz besitzen übereinstimmende enge Schmelzbereiche. Auch die 1:1-Mischprobe zeigt keine relevante Schmelzpunktdepression oder Verbreiterung. Die Strukturhypothese wird damit unabhängig bestätigt.";
+    }
+    els.confirmationSubmitBtn.disabled=!(bridgeMode&&state.measured.mixed);
+  }
+
+  function sendScreeningResult(){
     if(!bridgeMode||!bridgeRun||!window.AnalytikBridge||!state.summarized) return;
 
     const result={
@@ -247,6 +351,42 @@
       },
       evaluation:{
         supported_features:Object.fromEntries(Object.entries(state.supportedFeatures).map(([id,v])=>[id,{strength:v.strength,note_de:v.note_de}]))
+      },
+      created_at:new Date().toISOString()
+    };
+
+    const completed=window.AnalytikBridge.completeRun(bridgeRun.run_id,result);
+    window.AnalytikBridge.returnToHub(completed);
+  }
+
+  function sendMeltingResult(){
+    if(!bridgeMode||!bridgeRun||!window.AnalytikBridge||!state.measured.mixed||!confirmationProfile) return;
+    const result={
+      result_id:"RES_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
+      run_id:bridgeRun.run_id,
+      case_id:bridgeRun.case_id,
+      sample_id:bridgeRun.sample_id,
+      app_id:"ORG_FESTSTOFF_LAB",
+      app_version:VERSION,
+      analysis_type:"MELTING_POINT_CONFIRMATION",
+      status:"completed",
+      source:"app",
+      source_result_id:bridgeRun.source_result_id||bridgeInput.source_structure_result_id||null,
+      measurement:{
+        unknown_range_c:confirmationProfile.unknown_range_c.slice(),
+        reference_range_c:confirmationProfile.reference_range_c.slice(),
+        mixed_range_c:confirmationProfile.mixed_range_c.slice(),
+        reference_substance:bridgeInput.hypothesis_name_de||confirmationProfile.name_de
+      },
+      evaluation:{
+        identity_status:"confirmed",
+        confirmed_substance_id:confirmationProfile.substance_id,
+        confirmed_name_de:confirmationProfile.name_de,
+        evidence:{
+          reference_range_consistent:true,
+          mixed_melting_point_depression:false,
+          mixed_range_remains_sharp:true
+        }
       },
       created_at:new Date().toISOString()
     };

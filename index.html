@@ -14,7 +14,7 @@
         <h1>Organische Feststoffanalyse</h1>
         <p class="subtitle">Klassische Vorproben liefern Strukturhinweise – aber noch keinen Stoffnamen.</p>
       </div>
-      <div class="version">v0.1.0<br><small id="modeLabel">Single-Mode</small></div>
+      <div class="version">v0.2.0<br><small id="modeLabel">Single-Mode</small></div>
     </div>
   </header>
 
@@ -36,7 +36,7 @@
           <h2 id="sampleTitle">Unbekannter weißer organischer Feststoff</h2>
           <p id="sampleIntro" class="muted"></p>
         </div>
-        <span class="sample-chip">Identität verborgen</span>
+        <span id="sampleChip" class="sample-chip">Identität verborgen</span>
       </div>
       <div class="principle">
         <strong>Ziel dieser Station</strong>
@@ -44,7 +44,7 @@
       </div>
     </section>
 
-    <section class="card methods-card">
+    <section id="screeningMethodsCard" class="card methods-card">
       <div class="section-head">
         <div>
           <p class="kicker">Methoden</p>
@@ -58,7 +58,7 @@
       </div>
     </section>
 
-    <section class="card journal-card">
+    <section id="screeningJournalCard" class="card journal-card">
       <div class="section-head">
         <div>
           <p class="kicker">Befundjournal</p>
@@ -69,7 +69,7 @@
       <div id="journal" class="journal"></div>
     </section>
 
-    <section class="card summary-card">
+    <section id="screeningSummaryCard" class="card summary-card">
       <div class="section-head">
         <div>
           <p class="kicker">Auswertung</p>
@@ -84,6 +84,49 @@
       </div>
       <div class="submit-row">
         <button id="bridgeSubmitBtn" class="primary" type="button" hidden disabled>Strukturmerkmale an Hub übergeben</button>
+      </div>
+    </section>
+
+
+    <section id="confirmationCard" class="card confirmation-card" hidden>
+      <div class="section-head">
+        <div>
+          <p class="kicker">Physikalische Bestätigung</p>
+          <h2>Schmelz- und Mischschmelzpunkt</h2>
+        </div>
+        <span id="confirmationStatus" class="progress-badge">0 von 3</span>
+      </div>
+      <p class="muted">Vergleiche zuerst den Schmelzbereich der unbekannten Probe mit einem gezielt gewählten Referenzstandard. Eine unveränderte Mischprobe ist anschließend der stärkere Bestätigungsbefund.</p>
+
+      <div class="melting-grid">
+        <article class="melting-step">
+          <div><span class="step-no">1</span><strong>Unbekannte Probe</strong></div>
+          <p>Bestimme Beginn und Ende des Schmelzens.</p>
+          <button id="measureUnknownBtn" class="primary" type="button">Schmelzbereich messen</button>
+          <div id="unknownRange" class="range-result">noch nicht gemessen</div>
+        </article>
+        <article class="melting-step">
+          <div><span class="step-no">2</span><strong id="referenceTitle">Referenzstandard</strong></div>
+          <p>Messe den gezielt aus der Strukturhypothese gewählten Reinstoff unter denselben Bedingungen.</p>
+          <button id="measureReferenceBtn" class="primary" type="button" disabled>Referenz messen</button>
+          <div id="referenceRange" class="range-result">noch nicht gemessen</div>
+        </article>
+        <article class="melting-step">
+          <div><span class="step-no">3</span><strong>1:1-Mischprobe</strong></div>
+          <p>Mische unbekannte Probe und Referenz. Eine andere Verbindung würde typischerweise zu Depression und/oder Verbreiterung führen.</p>
+          <button id="measureMixedBtn" class="primary" type="button" disabled>Mischschmelzpunkt messen</button>
+          <div id="mixedRange" class="range-result">noch nicht gemessen</div>
+        </article>
+      </div>
+
+      <div class="range-chart">
+        <div class="range-axis"><span>150 °C</span><span>155</span><span>160</span><span>165 °C</span></div>
+        <div id="rangeBars" class="range-bars"></div>
+      </div>
+
+      <div id="confirmationFeedback" class="identity-guard" hidden></div>
+      <div class="submit-row">
+        <button id="confirmationSubmitBtn" class="primary" type="button" disabled>Bestätigung an Hub übergeben</button>
       </div>
     </section>
 
